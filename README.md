@@ -58,6 +58,7 @@ Este proceso puede demorar dependiendo de la cantidad de archivos que fueron cif
 | toilet                  | 
 | figlet                  | 
 | shred                   |
+| exiftool                |
 
 
 
