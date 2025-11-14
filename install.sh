@@ -135,6 +135,19 @@ else
 		
 fi
 
+if which exiftool >/dev/null; then
+		sleep 0.25
+         echo -e "$blue(exiftool)$nc ......................................................... Instalado [$green✓$nc]"
+		sleep 0.25
+	       
+else
+		sleep 0.25
+	 echo -e "$red(exiftool)$nc  No instalado [$red✗$nc]"
+			sleep 1
+	 pkg install exiftool -y
+		
+fi
+
 if which shred >/dev/null; then
 		sleep 0.25
          echo -e "$blue(shred)$nc ......................................................... Instalado [$green✓$nc]"
