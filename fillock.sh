@@ -63,7 +63,7 @@ trap ctrl_c INT
 
 # Verificar Dependencias
 clear
- echo -e "$blue(openssl)$nc Verificando dependencias.."
+ echo -e "$blue(*)$nc Verificando dependencias.."
  sleep 3
 if which openssl >/dev/null; then
     sleep 0.25
@@ -183,6 +183,24 @@ echo "Instala escribiendo [sudo pkg install mpv -y]"
 sleep 1
 exit 1
 fi
+
+if which exiftool  >/dev/null; then
+sleep 1
+echo -e "$blue(exiftool)$nc Instalado [$green✓$nc]"
+else
+sleep 1
+echo -e "$red(exiftool)$nc No instalado [$red✗$nc]"
+sleep 1
+echo "Instala escribiendo [sudo pkg install exiftool -y]"
+sleep 1
+exit 1
+fi
+
+
+
+
+
+
 
 # Verificar shred para borrado seguro
 if which shred >/dev/null; then
@@ -343,7 +361,7 @@ buscar_directorios_por_extension() {
     declare -n EXTENSIONES="EXT_${tipo^^}"
 
     echo
-    echo -e "${nc}Buscando archivos del tipo:${amarillo}${tipo}${nc}..."
+    echo -e "${nc}Buscando archivos del tipo: ${amarillo}${tipo}${nc}..."
     sleep 8
 
     # ── 1. Construir una expresión OR para find ───────────────────────────
@@ -367,11 +385,11 @@ buscar_directorios_por_extension() {
         menu_principal
     fi
 
-    echo -e "${nc}Archivos encontrados:${amarillo}$total_archivos${nc}"
+    echo -e "${nc}Archivos encontrados:${amarillo} $total_archivos${nc}"
     sleep 4
     echo
     read -p $'\e[01;35m(*)\e[01;32m ¿Deseás cifrarlos? (s/n): \e[01;33m' confirm
-    [[ "$confirm" != "s" ]] && echo -e "${rojo}Cancelado.${nc}" && return 1
+    [[ "$confirm" != "s" ]] && echo -e "${rojo}Cancelado.${nc}" && menu_principal
 
     printf "\e[01;35m(*)\e[01;32m Ingresá tu contraseña:\e[01;33m "
     read -s pass1; echo
@@ -519,7 +537,7 @@ done
 
     mostrar_mensaje "¿Confirmás cifrar los archivos en '$opcion'? (s/n):"
     read -r confirmacion
-    [[ "$confirmacion" != "s" ]] && mostrar_error "Cancelado." && return 1
+    [[ "$confirmacion" != "s" ]] && mostrar_error "Cancelado." && menu_principal
 
     # Verificar si shred está disponible
     if command -v shred >/dev/null 2>&1; then
@@ -671,7 +689,7 @@ descifrado_por_tipo() {
     mostrar_mensaje "Se encontraron los siguientes directorios cifrados con archivos $tipo:"
     for dir in "${DIRECTORIOS_ENC[@]}"; do echo "- $dir"; done
     read -p "¿Deseás descifrar todos estos directorios? (s/n): " confirm
-    [[ "$confirm" != "s" ]] && mostrar_error "Cancelado." && return 1
+    [[ "$confirm" != "s" ]] && mostrar_error "Cancelado." && menu_principal
 
     mostrar_mensaje "Ingresa contraseña para descifrado:"; read -s pass; echo
 
@@ -705,17 +723,24 @@ descifrado_por_tipo() {
 
     if [ "$exito" -eq 1 ]; then
         mostrar_ok "Descifrado por tipo completado."
+		echo
+		sleep 1
+		 # Eliminar del log
+        if [ -f "$LOG_FILE" ]; then
+            echo "Eliminando línea del log: tipo:$tipo"
+            sed -i "\|^tipo:$tipo\$|d" "$LOG_FILE"
+        fi
+		echo
+		mostrar_mensaje "Actualizando sistema multimedia... aguarde.. este proceso puede demorar.."
+		sleep 1
 
         # Refrescar todos los archivos descifrados en una sola llamada (más eficiente)
         for archivo in "${archivos_descifrados[@]}"; do
             am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$archivo" > /dev/null
         done
+		
 
-        # Eliminar del log
-        if [ -f "$LOG_FILE" ]; then
-            echo "Eliminando línea del log: tipo:$tipo"
-            sed -i "\|^tipo:$tipo\$|d" "$LOG_FILE"
-        fi
+       
     else
         mostrar_error "Ningún archivo fue descifrado correctamente. El log no se modificó."
     fi
@@ -766,7 +791,7 @@ desencriptar() {
     done
 
     if [ "$exito" -eq 1 ]; then
-        mostrar_mensaje "Actualizando sistema multimedia... aguarde...."
+        mostrar_mensaje "Actualizando sistema multimedia... aguarde.. este proceso puede demorar..."
 		sleep 3
         for archivo in "${archivos_refrescados[@]}"; do
             am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$archivo" > /dev/null
