@@ -789,6 +789,15 @@ desencriptar() {
             mostrar_error "Error al descifrar: $(basename "$archivo")"
         fi
     done
+	
+	if [ -f "$LOG_FILE" ]; then
+            dir_normalizado=$(echo "$directorio" | tr -d '\r')
+            echo "Eliminando entradas que contengan exactamente: individual:$dir_normalizado"
+            awk -v d="individual:$dir_normalizado" '$0 != d' "$LOG_FILE" > "${LOG_FILE}.tmp" && mv "${LOG_FILE}.tmp" "$LOG_FILE"
+			echo -e "${nc}volviendo al menu principal.."
+			sleep 3
+			menu_principal
+        fi
 
     if [ "$exito" -eq 1 ]; then
         mostrar_mensaje "Actualizando sistema multimedia... aguarde.. este proceso puede demorar..."
@@ -805,14 +814,7 @@ desencriptar() {
 
         
 
-        if [ -f "$LOG_FILE" ]; then
-            dir_normalizado=$(echo "$directorio" | tr -d '\r')
-            echo "Eliminando entradas que contengan exactamente: individual:$dir_normalizado"
-            awk -v d="individual:$dir_normalizado" '$0 != d' "$LOG_FILE" > "${LOG_FILE}.tmp" && mv "${LOG_FILE}.tmp" "$LOG_FILE"
-			echo -e "${nc}volviendo al menu principal.."
-			sleep 3
-			menu_principal
-        fi
+        
     else
        
 		echo -e "${nc}no se logró descifrar ningún archivo. volviendo al menu principal.."
@@ -868,6 +870,12 @@ descifrado_completo() {
             ((errores++))
         fi
     done
+	
+	  if [ -f "$LOG_FILE" ]; then
+            echo "Eliminando todas las entradas del LOG (descifrado total exitoso)."
+            > "$LOG_FILE"
+        fi
+    fi
 
     if [ "$descifrados" -gt 0 ]; then
         mostrar_mensaje "Actualizando sistema multimedia... aguarde este proceso puede demorar.."
@@ -877,11 +885,7 @@ descifrado_completo() {
 
         mostrar_ok "Descifrado completo finalizado correctamente. Archivos descifrados: $descifrados"
 		
-        if [ -f "$LOG_FILE" ]; then
-            echo "Eliminando todas las entradas del LOG (descifrado total exitoso)."
-            > "$LOG_FILE"
-        fi
-    fi
+      
 
     if [ "$errores" -gt 0 ]; then
         mostrar_error "Hubo $errores archivos que no pudieron descifrarse. Revisa $ERROR_LOG para más detalles."
