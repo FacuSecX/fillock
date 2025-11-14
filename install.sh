@@ -22,10 +22,10 @@ pkg update -y && pkg upgrade -y
 clear
 if which openssl >/dev/null; then
 		sleep 0.25
-         echo -e "$blue(AIRODUMP-NG)$nc .................................................. Instalado [$green✓$nc]"
+         echo -e "$blue(openssl)$nc .................................................. Instalado [$green✓$nc]"
 else
 		sleep 0.25
-	 echo -e "$red(AIRODUMP-NG)$nc No instalado [$red✗$nc]"
+	 echo -e "$red(openssl)$nc No instalado [$red✗$nc]"
 			sleep 1
 			pkg install install openssl -y && pkg install openssl-tool
 
