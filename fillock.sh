@@ -875,7 +875,7 @@ descifrado_completo() {
             echo "Eliminando todas las entradas del LOG (descifrado total exitoso)."
             > "$LOG_FILE"
         fi
-    fi
+    
 
     if [ "$descifrados" -gt 0 ]; then
         mostrar_mensaje "Actualizando sistema multimedia... aguarde este proceso puede demorar.."
