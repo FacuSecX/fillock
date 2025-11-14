@@ -21,7 +21,6 @@
 ## Como funciona:
 
 al utilizar cualquier opcion de cifrado, el archivo original se elimina y se encripta añadiendo la extensión .enc mediante OpenSSL. Además, se aplica un borrado seguro sobrescribiendo el archivo original con shred tres veces, lo que dificulta la recuperación mediante técnicas forenses.
-Por eso es fundamental mantener la clave bien protegida: si la pierdes, no habrá ninguna posibilidad de recuperar los archivos.
 
 ## Funciones automatizadas incluidas:
 
