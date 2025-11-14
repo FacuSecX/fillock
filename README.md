@@ -18,6 +18,9 @@
 
 **AVISO IMPORTANTE:** Usar este programa es bajo su responsabilidad, ya que también puede utilizarse de forma incorrecta y podría funcionar como ransomware. Tenga en cuenta que, al momento de encriptar cualquier tipo de archivo, la clave o contraseña utilizada debe ser respaldada. Si pierde esta contraseña, los archivos serán irrecuperables.
 
+**Como funciona:** al utilizar cualquier mecanismo de cifrado borra el archivo y lo encripta con la extension .enc de OPENSSL, aplica un Borrado seguro
+soscribiendo el archivo original con SHRED 3 veces, esto dificulta la recuperacion de archivos encriptados mediante tecnicas forenses.. por eso
+es importante a toda costa tener bien protegida la clave ya que si pierdes no tendras posibilidad alguna de recuperar los archivos.
 
 ## Funciones automatizadas incluidas:
 
