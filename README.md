@@ -18,6 +18,11 @@
 
 **AVISO IMPORTANTE:** Usar este programa es bajo su responsabilidad, ya que también puede utilizarse de forma incorrecta y podría funcionar como ransomware. Tenga en cuenta que, al momento de encriptar cualquier tipo de archivo, la clave o contraseña utilizada debe ser respaldada. Si pierde esta contraseña, los archivos serán irrecuperables.
 
+## Objetivo:
+
+**Fillock** tiene como prioridad la seguridad y el cifrado automático e ilimitado de tus archivos. Si bien en Android existe una gran variedad de aplicaciones para proteger fotos mediante patrones o contraseñas, la mayoría no son realmente confiables o requieren membresías costosas.
+Considero que la criptografía y la protección adicional de archivos deberían venir incorporadas de forma nativa en Android; sin embargo, si alguien conoce nuestro patrón o contraseña del sistema, todos nuestros datos quedan totalmente expuestos, y el sistema no ofrece funciones internas de cifrado individual para archivos.
+
 ## Como funciona:
 
 al utilizar cualquier opcion de cifrado, el archivo original se elimina y se encripta añadiendo la extensión .enc mediante OpenSSL. Además, se aplica un borrado seguro sobrescribiendo el archivo original con shred tres veces, lo que dificulta la recuperación mediante técnicas forenses.
