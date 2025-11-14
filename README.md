@@ -22,6 +22,12 @@
 
 al utilizar cualquier opcion de cifrado, el archivo original se elimina y se encripta añadiendo la extensión .enc mediante OpenSSL. Además, se aplica un borrado seguro sobrescribiendo el archivo original con shred tres veces, lo que dificulta la recuperación mediante técnicas forenses.
 
+## Informacion Adicional: 
+
+Cuando encripte cualquier tipo de archivo, estos dejarán de ser visibles en sus aplicaciones, como la galería o el reproductor de música. Una vez haya desencriptado los archivos, es posible que aún no aparezcan en las aplicaciones que gestionan esos tipos de contenido. Por este motivo, el programa incluye una función de actualización multimedia que realiza un "refresh" para que sus archivos vuelvan a ser detectados y visibles nuevamente.
+
+Este proceso puede demorar dependiendo de la cantidad de archivos que fueron cifrados. Sin embargo, puede acceder a ellos de forma más rápida mediante el gestor de archivos de su teléfono. Si prefiere no esperar el proceso de actualización, también puede reiniciar su dispositivo; al encenderlo, todos sus archivos volverán a mostrarse correctamente en la galería, el reproductor de música o cualquier aplicación que utilice para gestionar distintos tipos de archivos.
+
 ## Funciones automatizadas incluidas:
 
 | Funcion        |   Informacion                                                                                                                      |
