@@ -54,6 +54,9 @@ Este proceso puede demorar dependiendo de la cantidad de archivos que fueron cif
 | Android      | Compatible    |
 
 
+El script está pensado para Android, no para iOS, aunque también podría funcionar perfectamente si se realizan las modificaciones correspondientes en el código. 
+
+
 # Dependencias:
 
 | Dependencias nesesarias | 
