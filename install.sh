@@ -144,7 +144,7 @@ else
 		sleep 0.25
 	 echo -e "$red(shred)$nc  No instalado [$red✗$nc]"
 			sleep 1
-	 pkg install install coreutils  -y
+	 pkg install coreutils  -y
 		
 fi
 
@@ -155,4 +155,4 @@ clear
 chmod +x fillock.sh
 echo -e "iniciando programa en 5 segundos"
 sleep 5
-bash routerkill.sh
+bash fillock.sh
