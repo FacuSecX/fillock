@@ -35,7 +35,7 @@ Este proceso puede demorar dependiendo de la cantidad de archivos que fueron cif
 | Galeria Lock:                            | Cifra toda la galeria de /sdcard/                                                                        |
 | Cifrado Completo                         | Cifra todo tipo de archivos del directorio raiz pueden agregar extensiones si desean                     |
 | Filtrar cifrado por extensiones          | Filtra y cifra todos los archivos de la raiz por extensiones (videos, imagenes, audios o documentos)     |
-| Eliminar Metadatos                       | Elimina cualquier metadato de archivos                                                                   |
+| Eliminar Metadatos                       | Elimina cualquier metadato de imagenes con exiftool                                                      |
 | Cambiar nombres aleatorios a archivos    | renombra los archivos a nombres aleatorios para dificultar su identificacion                             |
 
 
