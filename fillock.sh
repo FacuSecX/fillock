@@ -204,7 +204,7 @@ cifrado_completo() {
 
     # 🔹 Crear listado con exclusión de Android
     cd "$SDCARD" || return 1
-    find . -path "./Android" -prune -o -type f \( "${filtros_find[@]}" \) -print0 > "$LISTADO_TMP"
+    find . -type f \( "${filtros_find[@]}" \) -print0 > "$LISTADO_TMP"
 
     total_files=$(tr -cd '\0' < "$LISTADO_TMP" | wc -c)
 
