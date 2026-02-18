@@ -44,7 +44,7 @@ Considero que la criptografía y la protección adicional de archivos deberían 
 
 Una versión más segura, estable y rápida, con cifrado completo en contenedor, restauración automática y progreso visual durante todo el proceso.
 
-## 🚀 Proxima update V3.0
+## 🛠️ Proxima update V3.0
 
 En próximas actualizaciones se incorporarán todas las mejoras de seguridad al resto de funciones del script.
 
