@@ -16,11 +16,11 @@
 
 **Fillock** es un simple script para Android que sirve para encriptar archivos mediante OpenSSL. Funciona básicamente como una aplicación, pero de manera ilimitada. El script puede utilizarse en cualquier emulador como Termux y permite cifrar archivos por extensiones: audios, videos, documentos o imágenes… o realizar un cifrado completo.
 
-## AVISO IMPORTANTE:
+## ⚠️ AVISO IMPORTANTE:
 
 Usar este programa es bajo su responsabilidad, ya que también puede utilizarse de forma incorrecta y podría funcionar como ransomware. Tenga en cuenta que, al momento de encriptar cualquier tipo de archivo, la clave o contraseña utilizada debe ser respaldada. Si pierde esta contraseña, los archivos serán irrecuperables.
 
-## Objetivo:
+## 🎯 Objetivo:
 
 **Fillock** está orientado a la protección real de datos mediante cifrado seguro y automatizado de archivos personales. Aunque en Android existen múltiples aplicaciones que prometen proteger fotos o documentos mediante patrones o contraseñas, muchas dependen de sistemas cerrados, funciones limitadas o modelos de suscripción, y no siempre aplican un cifrado real sobre los archivos.
 
