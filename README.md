@@ -22,8 +22,11 @@ Usar este programa es bajo su responsabilidad, ya que también puede utilizarse 
 
 ## Objetivo:
 
-**Fillock** tiene como prioridad la seguridad y el cifrado automático e ilimitado de tus archivos. Si bien en Android existe una gran variedad de aplicaciones para proteger fotos mediante patrones o contraseñas, la mayoría no son realmente confiables o requieren membresías costosas.
-Considero que la criptografía y la protección adicional de archivos deberían venir incorporadas de forma nativa en Android; sin embargo, si alguien conoce nuestro patrón o contraseña del sistema, todos nuestros datos quedan totalmente expuestos, y el sistema no ofrece funciones internas de cifrado individual para archivos.
+**Fillock** está orientado a la protección real de datos mediante cifrado seguro y automatizado de archivos personales. Aunque en Android existen múltiples aplicaciones que prometen proteger fotos o documentos mediante patrones o contraseñas, muchas dependen de sistemas cerrados, funciones limitadas o modelos de suscripción, y no siempre aplican un cifrado real sobre los archivos.
+
+Este proyecto nace con la idea de ofrecer un método transparente y controlado por el usuario, basado en herramientas de criptografía estándar, permitiendo cifrar grandes volúmenes de archivos en un único contenedor seguro.
+
+Si bien Android incluye mecanismos generales de bloqueo del dispositivo, una vez comprometida la contraseña o patrón del sistema, los archivos almacenados quedan accesibles. Fillock busca añadir una capa extra de protección, permitiendo cifrar archivos de forma independiente del sistema, manteniendo la integridad y la estructura original de los datos.
 
 
 ## V2.0:
