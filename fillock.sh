@@ -164,34 +164,29 @@ cifrado_completo() {
     pass_hash=$(echo -n "$pass2" | sha256sum | awk '{print $1}')
     unset pass1 pass2
 
-    
+    # 🔹 Variables compatibles Termux
     SDCARD="$HOME/storage/shared"
     CONTENEDOR="$SDCARD/vault.enc"
-    TEMP_VAULT="/sdcard/vault.tmp"
+    TEMP_VAULT="$SDCARD/vault.tmp"
     TAR_GZ="$SDCARD/vault.tar.gz"
     LISTADO_TMP="$SDCARD/listado_archivos.tmp"
     LOCK_FILE="$SDCARD/.vault.lock"
 
-    # 🔴 verificar contenedor existente
+    # 🔴 Verificar si ya existe el contenedor
     if [ -f "$CONTENEDOR" ]; then
-        echo -e "${rojo}⚠ Ya existe un contenedor:${nc}"
-        echo -e "${amarillo}$CONTENEDOR${nc}"
+        echo -e "${rojo}⚠ Ya existe un contenedor:${nc} ${amarillo}$CONTENEDOR${nc}"
         unset pass_hash
         exec 3<&-
         return 1
     fi
 
-    # 🔴 proceso previo incompleto
+    # 🔴 Proceso previo incompleto
     if [ -f "$LOCK_FILE" ]; then
         echo -e "${rojo}⚠ Proceso previo incompleto detectado.${nc}"
         read -p "¿Eliminar temporales y continuar? (s/n): " resp
 
         if [[ "$resp" =~ ^[Ss]$ ]]; then
-            rm -f "$LOCK_FILE"
-            rm -f "/sdcard/vault.tmp"
-            rm -f "/sdcard/vault.tar"
-            rm -f "/sdcard/vault.tar.gz"
-            rm -f "/sdcard/listado_archivos.tmp"
+            rm -f "$LOCK_FILE" "$TEMP_VAULT" "$TAR_GZ" "$LISTADO_TMP"
         else
             unset pass_hash
             exec 3<&-
@@ -211,31 +206,25 @@ cifrado_completo() {
 
     echo -e "${nc}(${azul}*${nc}) Preparando contenedor...${nc}"
 
-    # 🔥 EXCLUSIÓN /sdcard/Android (ÚNICO CAMBIO)
-    find /sdcard/ \
-        -path "/sdcard/Android" -prune -o \
+    # 🔹 EXCLUSIÓN /sdcard/Android
+    find "$SDCARD" \
+        -path "$SDCARD/Android" -prune -o \
         -type f \( "${filtros_find[@]}" \) -print0 > "$LISTADO_TMP"
 
-    # ⭐ PROGRESO PREPARACIÓN (ANTES)
+    # ⭐ Barra de progreso antes de crear el tar
     total_files=$(tr -cd '\0' < "$LISTADO_TMP" | wc -c)
-
-    tar --null -T "$LISTADO_TMP" -cf - 2>/dev/null | \
-    pv -0 -s "$total_files" | \
-    gzip -c > "$TAR_GZ"
+    tar --null -T "$LISTADO_TMP" -cf - 2>/dev/null | pv -0 -s "$total_files" | gzip -c > "$TAR_GZ"
 
     echo -e "${nc}(${azul}*${nc}) Cifrando contenedor...${nc}"
 
-    # ⭐ PROGRESO CIFRADO (DESPUÉS)
+    # ⭐ Barra de progreso durante cifrado
     total_bytes=$(stat -c%s "$TAR_GZ")
-
     if ! pv -s "$total_bytes" "$TAR_GZ" | \
         openssl enc -aes-256-cbc -pbkdf2 -salt \
         -pass pass:"$pass_hash" \
         -out "$TEMP_VAULT"; then
-
         echo -e "${rojo}✖ Error durante el cifrado${nc}"
-        rm -f "$TEMP_VAULT" "$TAR_GZ" "$LISTADO_TMP"
-        rm -f "$LOCK_FILE"
+        rm -f "$TEMP_VAULT" "$TAR_GZ" "$LISTADO_TMP" "$LOCK_FILE"
         unset pass_hash
         exec 3<&-
         return 1
@@ -243,23 +232,22 @@ cifrado_completo() {
 
     mv "$TEMP_VAULT" "$CONTENEDOR"
 
+    # 🔹 Eliminar archivos originales tras cifrado
     while IFS= read -r -d '' archivo; do
         rm -f "$archivo"
     done < "$LISTADO_TMP"
 
-    rm -f "$TAR_GZ" "$LISTADO_TMP"
-    rm -f "$LOCK_FILE"
-
+    # 🔹 Limpiar temporales
+    rm -f "$TAR_GZ" "$LISTADO_TMP" "$LOCK_FILE"
     unset pass_hash
     exec 3<&-
 
     echo -e "${verde}✔ Contenedor creado correctamente: $CONTENEDOR${nc}"
     echo -e "${verde}✔ Cifrado completo finalizado.${nc}"
-
     sleep 1
     menu_principal
 }
-   
+
 
 
 
@@ -745,6 +733,7 @@ descifrado_completo() {
     echo -e "${nc}(${verde}*${nc}) Ingresá la contraseña para descifrar todo..."
     sleep 1
 
+    # File descriptor seguro para contraseña
     exec 3<&0
     read -s -p "(*) Escribí tu contraseña: " pass <&3
     echo
@@ -753,6 +742,7 @@ descifrado_completo() {
     pass_hash=$(echo -n "$pass" | sha256sum | awk '{print $1}')
     unset pass
 
+    # 🔹 Variables Termux
     SDCARD="$HOME/storage/shared"
     CONTENEDOR="$SDCARD/vault.enc"
     TEMP_VAULT="$SDCARD/vault.tmp"
@@ -765,7 +755,7 @@ descifrado_completo() {
 
     echo -e "${nc}(${azul}*${nc}) Preparando extracción... esto puede tardar un momento${nc}"
 
-    # 🔹 Descifrar con progreso
+    # 🔹 Descifrar con pv mostrando progreso
     total_bytes=$(stat -c%s "$CONTENEDOR")
     if ! pv -s "$total_bytes" "$CONTENEDOR" | \
         openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:"$pass_hash" -out "$TEMP_VAULT"; then
@@ -775,6 +765,7 @@ descifrado_completo() {
         return 1
     fi
 
+    # 🔹 Descomprimir tar.gz con barra de progreso
     echo -e "${nc}(${azul}*${nc}) Descomprimiendo contenedor...${nc}"
     total_bytes=$(stat -c%s "$TEMP_VAULT")
     if ! pv -s "$total_bytes" "$TEMP_VAULT" | gzip -d -c > "$TAR_TMP"; then
@@ -784,27 +775,33 @@ descifrado_completo() {
         return 1
     fi
 
-    # 🔹 Extraer tar usando SDCARD como raíz
+    # 🔹 Restaurar archivos a sus rutas originales con barra de progreso
     echo -e "${nc}(${azul}*${nc}) Restaurando archivos a sus ubicaciones originales...${nc}"
-    if ! tar --null -xf "$TAR_TMP" -C "$SDCARD" 2>/dev/null; then
-        echo -e "${rojo}✖ Error al extraer archivos del contenedor${nc}"
-        rm -f "$TEMP_VAULT" "$TAR_TMP"
-        unset pass_hash
-        return 1
-    fi
+    # Primero obtenemos la lista de archivos del tar
+    mapfile -d $'\0' archivos < <(tar -tf "$TAR_TMP" --null)
 
-    # 🔹 Limpiar temporales
-    rm -f "$TEMP_VAULT" "$TAR_TMP"
+    total_files=${#archivos[@]}
+    count=0
+
+    for archivo in "${archivos[@]}"; do
+        count=$((count + 1))
+        tar --extract --file="$TAR_TMP" --directory=/ --no-same-owner --no-overwrite-dir "$archivo" 2>/dev/null
+        # Mostrar progreso simple
+        printf "\rProgreso: %d/%d archivos" "$count" "$total_files"
+    done
+    echo
+
+    # 🔹 Limpiar temporales y eliminar contenedor
+    rm -f "$TEMP_VAULT" "$TAR_TMP" "$CONTENEDOR"
     unset pass_hash
 
     echo -e "${verde}✔ Descifrado completo finalizado correctamente.${nc}"
-
-    # 🔹 Eliminar contenedor tras éxito
-    rm -f "$CONTENEDOR"
     echo -e "${verde}✔ Contenedor eliminado tras descifrado exitoso.${nc}"
     sleep 1
     menu_principal
 }
+
+
 
 
 
