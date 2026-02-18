@@ -25,15 +25,6 @@ Usar este programa es bajo su responsabilidad, ya que también puede utilizarse 
 **Fillock** tiene como prioridad la seguridad y el cifrado automático e ilimitado de tus archivos. Si bien en Android existe una gran variedad de aplicaciones para proteger fotos mediante patrones o contraseñas, la mayoría no son realmente confiables o requieren membresías costosas.
 Considero que la criptografía y la protección adicional de archivos deberían venir incorporadas de forma nativa en Android; sin embargo, si alguien conoce nuestro patrón o contraseña del sistema, todos nuestros datos quedan totalmente expuestos, y el sistema no ofrece funciones internas de cifrado individual para archivos.
 
-## Como funciona:
-
-al utilizar cualquier opcion de cifrado, el archivo original se elimina y se encripta añadiendo la extensión .enc mediante OpenSSL. Además, se aplica un borrado seguro sobrescribiendo el archivo original con shred tres veces, lo que dificulta la recuperación mediante técnicas forenses.
-
-## Informacion Adicional: 
-
-Cuando encripte cualquier tipo de archivo, estos dejarán de ser visibles en sus aplicaciones, como la galería o el reproductor de música. Una vez haya desencriptado los archivos, es posible que aún no aparezcan en las aplicaciones que gestionan esos tipos de contenido. Por este motivo, el programa incluye una función de actualización multimedia que realiza un "refresh" para que sus archivos vuelvan a ser detectados y visibles nuevamente.
-
-Este proceso puede demorar dependiendo de la cantidad de archivos que fueron cifrados. Sin embargo, puede acceder a ellos de forma más rápida mediante el gestor de archivos de su teléfono. Si prefiere no esperar el proceso de actualización, también puede reiniciar su dispositivo; al encenderlo, todos sus archivos volverán a mostrarse correctamente en la galería, el reproductor de música o cualquier aplicación que utilice para gestionar distintos tipos de archivos.
 
 ## V2.0:
 
