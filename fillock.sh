@@ -286,11 +286,13 @@ cifrado_completo() {
     pass_hash=$(echo -n "$pass2" | sha256sum | awk '{print $1}')
     unset pass1 pass2
 
-    CONTENEDOR="/sdcard/vault.enc"
+    
+    SDCARD="$HOME/storage/shared"
+    CONTENEDOR="$SDCARD/vault.enc"
     TEMP_VAULT="/sdcard/vault.tmp"
-    TAR_GZ="/sdcard/vault.tar.gz"
-    LISTADO_TMP="/sdcard/listado_archivos.tmp"
-    LOCK_FILE="/sdcard/.vault.lock"
+    TAR_GZ="$SDCARD/vault.tar.gz"
+    LISTADO_TMP="$SDCARD/listado_archivos.tmp"
+    LOCK_FILE="$SDCARD/.vault.lock"
 
     # 🔴 verificar contenedor existente
     if [ -f "$CONTENEDOR" ]; then
@@ -874,9 +876,10 @@ descifrado_completo() {
     pass_hash=$(echo -n "$pass" | sha256sum | awk '{print $1}')
     unset pass
 
-    CONTENEDOR="/sdcard/vault.enc"
-    TEMP_VAULT="/sdcard/vault_tmp.tar.gz"
-    TAR_TMP="/sdcard/vault_tmp.tar"
+    SDCARD="$HOME/storage/shared"
+    CONTENEDOR="$SDCARD/vault.enc"
+    TEMP_VAULT="$SDCARD/vault.tmp"
+    TAR_TMP="$SDCARD/vault.tar"
 
     if [ ! -f "$CONTENEDOR" ]; then
         echo -e "${rojo}✖ No se encontró el contenedor: $CONTENEDOR${nc}"
