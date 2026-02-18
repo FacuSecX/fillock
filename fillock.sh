@@ -122,6 +122,7 @@ else
     sleep 1
     echo -e "${nc}Asegurate de estar en Termux con permisos para 'am'"
     exit 1
+   
 fi
 
 if which toilet >/dev/null; then
@@ -258,102 +259,138 @@ log_mostrar() {
 }
 
 cifrado_completo() {
-    echo -e "${nc}(${verde}*${nc})${nc} Este proceso Cifrara todos los archivos de su celular.."
-	sleep 3
-	echo -e "${nc}(${verde}*${nc})${nc} Incluyendo, audios, fotos, videos, archivos"
-	sleep 3
-    echo -e "${nc}(${verde}*${nc})${nc} Se recomienda Guardar la contraseña "
-    sleep 3
-	echo -e "${nc}(${rojo}ADVERTENCIA${nc})${nc} Si pierde esta contraseña sus archivos seran irrecuperables"
-	sleep 3
-	echo
-	#Pedir contraseña
-    printf "\e[01;35m(*)\e[01;32m Escribí tu contraseña:\e[01;33m "
-    read -s pass1
-    echo
-	
-	#Confirmar contraseña
-    printf "\e[01;35m(*)\e[01;32m Repetí tu contraseña:\e[01;33m "
-    read -s pass2
-    echo
-	
-	 #Verificar Contraseña
-     if [[ "$pass1" != "$pass2" ]]; then
-        echo -e "${nc}(${rojo}!${nc})${rojo} Las contraseñas no coinciden. intenta de nuevo...${nc}"
-        sleep 1
-		menu_principal
-        
-    fi
-	
-	
 
-    # Extensiones a cifrar
-    
+    echo -e "${nc}(${verde}*${nc}) Este proceso cifrará todos los archivos de su celular..."
+    sleep 1
+    echo -e "${nc}(${verde}*${nc}) Incluyendo audios, fotos, videos y otros archivos"
+    sleep 1
+    echo -e "${nc}(${verde}*${nc}) Se recomienda guardar la contraseña"
+    sleep 1
+    echo -e "${nc}(${rojo}ADVERTENCIA${nc}) Si pierde esta contraseña sus archivos serán irrecuperables"
+    sleep 1
+    echo
+
+    exec 3<&0
+    read -s -p "(*) Escribí tu contraseña: " pass1 <&3
+    echo
+    read -s -p "(*) Repetí tu contraseña: " pass2 <&3
+    echo
+
+    if [[ "$pass1" != "$pass2" ]]; then
+        echo -e "${rojo}✖ Las contraseñas no coinciden.${nc}"
+        unset pass1 pass2
+        exec 3<&-
+        return 1
+    fi
+
+    pass_hash=$(echo -n "$pass2" | sha256sum | awk '{print $1}')
+    unset pass1 pass2
+
+    CONTENEDOR="/sdcard/vault.enc"
+    TEMP_VAULT="/sdcard/vault.tmp"
+    TAR_GZ="/sdcard/vault.tar.gz"
+    LISTADO_TMP="/sdcard/listado_archivos.tmp"
+    LOCK_FILE="/sdcard/.vault.lock"
+
+    # 🔴 verificar contenedor existente
+    if [ -f "$CONTENEDOR" ]; then
+        echo -e "${rojo}⚠ Ya existe un contenedor:${nc}"
+        echo -e "${amarillo}$CONTENEDOR${nc}"
+        unset pass_hash
+        exec 3<&-
+        return 1
+    fi
+
+    # 🔴 proceso previo incompleto
+    if [ -f "$LOCK_FILE" ]; then
+        echo -e "${rojo}⚠ Proceso previo incompleto detectado.${nc}"
+        read -p "¿Eliminar temporales y continuar? (s/n): " resp
+
+        if [[ "$resp" =~ ^[Ss]$ ]]; then
+            rm -f "$LOCK_FILE"
+            rm -f "/sdcard/vault.tmp"
+            rm -f "/sdcard/vault.tar"
+            rm -f "/sdcard/vault.tar.gz"
+            rm -f "/sdcard/listado_archivos.tmp"
+        else
+            unset pass_hash
+            exec 3<&-
+            return 1
+        fi
+    fi
+
+    touch "$LOCK_FILE"
+
     EXT_TODAS=("${EXT_IMAGENES[@]}" "${EXT_VIDEOS[@]}" "${EXT_AUDIOS[@]}" "${EXT_EXTRA[@]}")
-	
-	 filtros_find=()
+
+    filtros_find=()
     for ext in "${EXT_TODAS[@]}"; do
         filtros_find+=( -iname "*${ext}" -o )
     done
-    unset 'filtros_find[${#filtros_find[@]}-1]'  # quitar el -o final
+    unset 'filtros_find[${#filtros_find[@]}-1]'
 
-    total=$(find /sdcard/ -type f \( "${filtros_find[@]}" \) 2>/dev/null | wc -l)
-    echo -e "${nc}(${azul}*${nc})${verde} Archivos detectados para cifrar:${amarillo} $total${nc}"
-    sleep 2
-	echo -e "${nc}(${azul}*${nc})${verde} Iniciando cifrado completo de imágenes, videos, audios y otros archivos..."
+    echo -e "${nc}(${azul}*${nc}) Preparando contenedor...${nc}"
+
+    # 🔥 EXCLUSIÓN /sdcard/Android (ÚNICO CAMBIO)
+    find /sdcard/ \
+        -path "/sdcard/Android" -prune -o \
+        -type f \( "${filtros_find[@]}" \) -print0 > "$LISTADO_TMP"
+
+    # ⭐ PROGRESO PREPARACIÓN (ANTES)
+    total_files=$(tr -cd '\0' < "$LISTADO_TMP" | wc -c)
+
+    tar --null -T "$LISTADO_TMP" -cf - 2>/dev/null | \
+    pv -0 -s "$total_files" | \
+    gzip -c > "$TAR_GZ"
+
+    echo -e "${nc}(${azul}*${nc}) Cifrando contenedor...${nc}"
+
+    # ⭐ PROGRESO CIFRADO (DESPUÉS)
+    total_bytes=$(stat -c%s "$TAR_GZ")
+
+    if ! pv -s "$total_bytes" "$TAR_GZ" | \
+        openssl enc -aes-256-cbc -pbkdf2 -salt \
+        -pass pass:"$pass_hash" \
+        -out "$TEMP_VAULT"; then
+
+        echo -e "${rojo}✖ Error durante el cifrado${nc}"
+        rm -f "$TEMP_VAULT" "$TAR_GZ" "$LISTADO_TMP"
+        rm -f "$LOCK_FILE"
+        unset pass_hash
+        exec 3<&-
+        return 1
+    fi
+
+    mv "$TEMP_VAULT" "$CONTENEDOR"
+
+    while IFS= read -r -d '' archivo; do
+        rm -f "$archivo"
+    done < "$LISTADO_TMP"
+
+    rm -f "$TAR_GZ" "$LISTADO_TMP"
+    rm -f "$LOCK_FILE"
+
+    unset pass_hash
+    exec 3<&-
+
+    echo -e "${verde}✔ Contenedor creado correctamente: $CONTENEDOR${nc}"
+    echo -e "${verde}✔ Cifrado completo finalizado.${nc}"
+
     sleep 1
-
-    # Crear LOG_FILE si no existe
-    [ ! -f "$LOG_FILE" ] && touch "$LOG_FILE"
-
-    cifrados=0
-    errores=0
-    ERROR_LOG="cifrado_errores.log"
-    > "$ERROR_LOG" # limpiar log errores
-
-    for ext in "${EXT_TODAS[@]}"; do
-        while IFS= read -r -d '' archivo; do
-            # Omitir archivos ya cifrados
-            [[ "$archivo" == *.enc ]] && continue
-            destino="$archivo.enc"
-            if openssl enc -aes-256-cbc -pbkdf2 -salt -in "$archivo" -out "$destino" -pass pass:"$pass1"; then
-                rm "$archivo"
-                echo -e "(${verde}✔${nc} Cifrado:${amarillo} $(basename "$archivo")${nc}"
-                ((cifrados++))
-            else
-                echo -e "(${rojo}✖ Error al cifrar:${amarillo} $(basename "$archivo")${nc}"
-                echo "$(date '+%Y-%m-%d %H:%M:%S') Error cifrando: $archivo" >> "$ERROR_LOG"
-                ((errores++))
-            fi
-        done < <(find /sdcard/ -type f -iname "*${ext}" -print0 2>/dev/null)
-    done
-
-    if [ "$cifrados" -gt 0 ]; then
-        log_agregar "completo:/sdcard"
-        echo -e "(${verde}✔${nc} ${verde}Cifrado completo finalizado. Archivos cifrados:${amarillo} $cifrados${nc}"
-		sleep 1
-		echo -e "(${verde}✔${nc} ${verde}volviendo al menu principal${nc}"
-		sleep 1
-		menu_principal
-    else
-        echo -e "(${rojo}✖${nc}) ${rojo}Error al cifrar:${verde} no se pudo cifrar ningun archivo ${nc}"
-		sleep 1
-		echo -e "(${verde}✔${nc} ${verde}volviendo al menu principal${nc}"
-		sleep 1
-		menu_principal
-    fi
-
-    if [ "$errores" -gt 0 ]; then
-       
-		echo -e "(${rojo}✖${nc} ${rojo}Hubo $errores archivos que no pudieron cifrarse. Revisa $ERROR_LOG para más detalles ${nc}"
-		sleep 1
-		echo -e "(${verde}✔${nc} ${verde}volviendo al menu principal${nc}"
-		sleep 1
-		menu_principal
-    fi
-
-    return 0
+    menu_principal
 }
+   
+
+
+
+
+
+
+
+
+
+
+
 
 
 buscar_directorios_por_extension() {
@@ -825,71 +862,77 @@ desencriptar() {
 
 
 descifrado_completo() {
-    mostrar_mensaje "Ingresá la contraseña para descifrar todo:"
-    read -s pass
+    echo -e "${nc}(${verde}*${nc}) Ingresá la contraseña para descifrar todo..."
+    sleep 1
+
+    # File descriptor seguro para contraseña
+    exec 3<&0
+    read -s -p "(*) Escribí tu contraseña: " pass <&3
     echo
+    exec 3<&-
 
-    # Crear LOG_FILE si no existe
-    [ ! -f "$LOG_FILE" ] && touch "$LOG_FILE"
+    pass_hash=$(echo -n "$pass" | sha256sum | awk '{print $1}')
+    unset pass
 
-    mapfile -t ARCHIVOS_ENC < <(find /sdcard/ -type f -name "*.enc" 2>/dev/null)
+    CONTENEDOR="/sdcard/vault.enc"
+    TEMP_VAULT="/sdcard/vault_tmp.tar.gz"
+    TAR_TMP="/sdcard/vault_tmp.tar"
 
-    if [ ${#ARCHIVOS_ENC[@]} -eq 0 ]; then
-        mostrar_error "No se encontraron archivos .enc para descifrar."
+    if [ ! -f "$CONTENEDOR" ]; then
+        echo -e "${rojo}✖ No se encontró el contenedor: $CONTENEDOR${nc}"
         return 1
     fi
 
-    # Validar contraseña con primer archivo
-    if ! openssl enc -d -aes-256-cbc -pbkdf2 -in "${ARCHIVOS_ENC[0]}" -out /dev/null -pass pass:"$pass" 2>/dev/null; then
-        mostrar_error "Contraseña incorrecta"
-		sleep 2
+    echo -e "${nc}(${azul}*${nc}) Preparando extracción... esto puede tardar un momento${nc}"
+
+    # 🔹 Descifrar con pv mostrando progreso
+    total_bytes=$(stat -c%s "$CONTENEDOR")
+    if ! pv -s "$total_bytes" "$CONTENEDOR" | openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:"$pass_hash" -out "$TEMP_VAULT"; then
+        echo -e "${rojo}✖ Contraseña incorrecta o contenedor corrupto.${nc}"
+        rm -f "$TEMP_VAULT"
+        unset pass_hash
         return 1
     fi
 
-    mostrar_mensaje "Archivos cifrados encontrados: ${#ARCHIVOS_ENC[@]}"
-	sleep 2
+   # 🔹 Descomprimir tar.gz con progreso
+echo -e "${nc}(${azul}*${nc}) Descomprimiendo contenedor...${nc}"
 
-    descifrados=0
-    errores=0
-    archivos_refrescados=()
-    ERROR_LOG="descifrado_errores.log"
-    > "$ERROR_LOG"  # Limpiar log de errores
+total_bytes=$(stat -c%s "$TEMP_VAULT")
 
-    for archivo in "${ARCHIVOS_ENC[@]}"; do
-        out="${archivo%.enc}"
-        if openssl enc -d -aes-256-cbc -pbkdf2 -in "$archivo" -out "$out" -pass pass:"$pass" 2>/dev/null; then
-            rm "$archivo"
-            mostrar_ok "Descifrado: $(basename "$archivo")"
-            archivos_refrescados+=("$out")
-            ((descifrados++))
-        else
-            mostrar_error "Error descifrando: $(basename "$archivo")"
-            echo "$(date '+%Y-%m-%d %H:%M:%S') Error descifrando: $archivo" >> "$ERROR_LOG"
-            ((errores++))
-        fi
-    done
+if ! pv -s "$total_bytes" "$TEMP_VAULT" | gzip -d -c > "$TAR_TMP"; then
+    echo -e "${rojo}✖ Error al descomprimir el contenedor${nc}"
+    rm -f "$TEMP_VAULT" "$TAR_TMP"
+    unset pass_hash
+    return 1
+fi
 
-    if [ "$descifrados" -gt 0 ]; then
-        mostrar_mensaje "Actualizando sistema multimedia... aguarde este proceso puede demorar.."
-        for archivo in "${archivos_refrescados[@]}"; do
-            am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$archivo" > /dev/null
-        done
 
-        mostrar_ok "Descifrado completo finalizado correctamente. Archivos descifrados: $descifrados"
-		
-        if [ -f "$LOG_FILE" ]; then
-            echo "Eliminando todas las entradas del LOG (descifrado total exitoso)."
-            > "$LOG_FILE"
-        fi
+    # 🔹 Extraer tar a sus rutas originales
+    echo -e "${nc}(${azul}*${nc}) Restaurando archivos a sus ubicaciones originales...${nc}"
+    if ! tar --null -xf "$TAR_TMP" -C / 2>/dev/null; then
+        echo -e "${rojo}✖ Error al extraer archivos del contenedor${nc}"
+        rm -f "$TEMP_VAULT" "$TAR_TMP"
+        unset pass_hash
+        return 1
     fi
 
-    if [ "$errores" -gt 0 ]; then
-        mostrar_error "Hubo $errores archivos que no pudieron descifrarse. Revisa $ERROR_LOG para más detalles."
-    fi
+    
 
-    return 0
+    # 🔹 Limpiar temporales
+    rm -f "$TEMP_VAULT" "$TAR_TMP"
+    unset pass_hash
+
+    echo -e "${verde}✔ Descifrado completo finalizado correctamente.${nc}"
+    # 🔹 Si todo terminó bien, eliminar contenedor
+    rm -f "$CONTENEDOR"
+    echo -e "${verde}✔ Contenedor eliminado tras descifrado exitoso.${nc}"
+    sleep 1
+    menu_principal
 }
 
+
+
+ 
 
 
 
