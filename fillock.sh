@@ -136,7 +136,7 @@ log_mostrar() {
     done < "$LOG_FILE"
 }
 
-ccifrado_completo() {
+cifrado_completo() {
     echo -e "${nc}(${verde}*${nc}) Este proceso cifrará todos los archivos de su celular..."
     sleep 1
     echo -e "${nc}(${verde}*${nc}) Incluyendo audios, fotos, videos y otros archivos"
