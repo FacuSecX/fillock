@@ -28,7 +28,7 @@ Considero que la criptografía y la protección adicional de archivos deberían 
 
 ## V2.0:
 
-* Se corrigieron errores críticos de seguridad en las funciones de CIFRADO Y DECIFRADO COMPLETO (Directorio raiz /sdcard)
+* Se corrigieron errores críticos de seguridad en las funciones de Cifrado y decifrado completo.
 * Se implementó cifrado en contenedor único.
 * se eliminó el cifrado archivo por archivo para mejorar estabilidad y rendimiento.
 * Se añadió verificación para evitar sobrescribir contenedores existentes.
