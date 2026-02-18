@@ -745,7 +745,6 @@ descifrado_completo() {
     echo -e "${nc}(${verde}*${nc}) Ingresá la contraseña para descifrar todo..."
     sleep 1
 
-    # File descriptor seguro para contraseña
     exec 3<&0
     read -s -p "(*) Escribí tu contraseña: " pass <&3
     echo
@@ -766,50 +765,47 @@ descifrado_completo() {
 
     echo -e "${nc}(${azul}*${nc}) Preparando extracción... esto puede tardar un momento${nc}"
 
-    # 🔹 Descifrar con pv mostrando progreso
+    # 🔹 Descifrar con progreso
     total_bytes=$(stat -c%s "$CONTENEDOR")
-    if ! pv -s "$total_bytes" "$CONTENEDOR" | openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:"$pass_hash" -out "$TEMP_VAULT"; then
+    if ! pv -s "$total_bytes" "$CONTENEDOR" | \
+        openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:"$pass_hash" -out "$TEMP_VAULT"; then
         echo -e "${rojo}✖ Contraseña incorrecta o contenedor corrupto.${nc}"
         rm -f "$TEMP_VAULT"
         unset pass_hash
         return 1
     fi
 
-   # 🔹 Descomprimir tar.gz con progreso
-echo -e "${nc}(${azul}*${nc}) Descomprimiendo contenedor...${nc}"
+    echo -e "${nc}(${azul}*${nc}) Descomprimiendo contenedor...${nc}"
+    total_bytes=$(stat -c%s "$TEMP_VAULT")
+    if ! pv -s "$total_bytes" "$TEMP_VAULT" | gzip -d -c > "$TAR_TMP"; then
+        echo -e "${rojo}✖ Error al descomprimir el contenedor${nc}"
+        rm -f "$TEMP_VAULT" "$TAR_TMP"
+        unset pass_hash
+        return 1
+    fi
 
-total_bytes=$(stat -c%s "$TEMP_VAULT")
-
-if ! pv -s "$total_bytes" "$TEMP_VAULT" | gzip -d -c > "$TAR_TMP"; then
-    echo -e "${rojo}✖ Error al descomprimir el contenedor${nc}"
-    rm -f "$TEMP_VAULT" "$TAR_TMP"
-    unset pass_hash
-    return 1
-fi
-
-
-    # 🔹 Extraer tar a sus rutas originales
+    # 🔹 Extraer tar usando SDCARD como raíz
     echo -e "${nc}(${azul}*${nc}) Restaurando archivos a sus ubicaciones originales...${nc}"
-    if ! tar --null -xf "$TAR_TMP" -C / 2>/dev/null; then
+    if ! tar --null -xf "$TAR_TMP" -C "$SDCARD" 2>/dev/null; then
         echo -e "${rojo}✖ Error al extraer archivos del contenedor${nc}"
         rm -f "$TEMP_VAULT" "$TAR_TMP"
         unset pass_hash
         return 1
     fi
 
-    
-
     # 🔹 Limpiar temporales
     rm -f "$TEMP_VAULT" "$TAR_TMP"
     unset pass_hash
 
     echo -e "${verde}✔ Descifrado completo finalizado correctamente.${nc}"
-    # 🔹 Si todo terminó bien, eliminar contenedor
+
+    # 🔹 Eliminar contenedor tras éxito
     rm -f "$CONTENEDOR"
     echo -e "${verde}✔ Contenedor eliminado tras descifrado exitoso.${nc}"
     sleep 1
     menu_principal
 }
+
 
 
 
