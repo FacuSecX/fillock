@@ -216,8 +216,7 @@ total_files=$(tr -cd '\0' < "$LISTADO_TMP" | wc -c)
 # 🔹 Crear tar.gz con progreso
 tar --null -T "$LISTADO_TMP" -cf - 2>/dev/null | pv -0 -s "$total_files" | gzip -c > "$TAR_GZ"
 
-# 🔹 Generar hash del tar.gz antes de cifrar
-sha256sum "$TAR_GZ" | awk '{print $1}' > "$HASH_FILE"
+
 
 echo -e "${nc}(${azul}*${nc}) Cifrando contenedor...${nc}"
 
@@ -749,7 +748,7 @@ descifrado_completo() {
     CONTENEDOR="$SDCARD/vault.enc"
     TEMP_VAULT="$SDCARD/vault.tmp"
     TAR_TMP="$SDCARD/vault.tar"
-    HASH_FILE="$SDCARD/vault.sha256"
+ 
 
     if [ ! -f "$CONTENEDOR" ]; then
         echo -e "${rojo}✖ No se encontró el contenedor: $CONTENEDOR${nc}"
@@ -776,19 +775,7 @@ descifrado_completo() {
         return 1
     fi
 
-    # 🔹 Verificación de integridad antes de restaurar
-    if [ -f "$HASH_FILE" ]; then
-        computed_hash=$(sha256sum "$TAR_TMP" | awk '{print $1}')
-        original_hash=$(cat "$HASH_FILE")
-        if [[ "$computed_hash" != "$original_hash" ]]; then
-            echo -e "${rojo}✖ Error de integridad: el contenedor parece haber sido modificado.${nc}"
-            rm -f "$TEMP_VAULT" "$TAR_TMP"
-            unset pass_hash
-            return 1
-        fi
-        rm -f "$HASH_FILE"
-    fi
-
+ 
     echo -e "${nc}(${azul}*${nc}) Restaurando archivos a sus ubicaciones originales...${nc}"
 
     # 🔹 Extraer tar a la raíz de SDCARD
