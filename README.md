@@ -31,6 +31,7 @@ Considero que la criptografía y la protección adicional de archivos deberían 
 * Se corrigieron errores críticos de seguridad en las funciones de Cifrado y decifrado completo.
 * Se implementó cifrado en contenedor único.
 * se eliminó el cifrado archivo por archivo para mejorar estabilidad y rendimiento.
+* Se implementó verificación de integridad para asegurar la validez del contenedor cifrado.
 * Se añadió verificación para evitar sobrescribir contenedores existentes.
 * Se implementó sistema de lock file y limpieza automática de temporales.
 * Se optimizó el manejo de contraseñas y variables sensibles en memoria.
