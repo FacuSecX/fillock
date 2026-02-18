@@ -202,37 +202,50 @@ cifrado_completo() {
 
     echo -e "${nc}(${azul}*${nc}) Preparando contenedor...${nc}"
 
-    # 🔹 Crear listado con exclusión de Android
-    cd "$SDCARD" || return 1
-    find . -type f \( "${filtros_find[@]}" \) -print0 > "$LISTADO_TMP"
+   
+	# 🔹 Crear listado de archivos SIN excluir Android
+cd "$SDCARD" || return 1
+find . -type f \( "${filtros_find[@]}" \) -print0 > "$LISTADO_TMP"
 
-    total_files=$(tr -cd '\0' < "$LISTADO_TMP" | wc -c)
+# 🔹 Generar hash SHA256 del tar.gz para verificación de integridad
+TAR_GZ="$SDCARD/vault.tar.gz"
+HASH_FILE="$SDCARD/vault.sha256"
 
-    # 🔹 Crear tar.gz con progreso
-    tar --null -T "$LISTADO_TMP" -cf - 2>/dev/null | pv -0 -s "$total_files" | gzip -c > "$TAR_GZ"
+total_files=$(tr -cd '\0' < "$LISTADO_TMP" | wc -c)
 
-    echo -e "${nc}(${azul}*${nc}) Cifrando contenedor...${nc}"
+# 🔹 Crear tar.gz con progreso
+tar --null -T "$LISTADO_TMP" -cf - 2>/dev/null | pv -0 -s "$total_files" | gzip -c > "$TAR_GZ"
 
-    total_bytes=$(stat -c%s "$TAR_GZ")
-    if ! pv -s "$total_bytes" "$TAR_GZ" | openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:"$pass_hash" -out "$TEMP_VAULT"; then
-        echo -e "${rojo}✖ Error durante el cifrado${nc}"
-        rm -f "$TEMP_VAULT" "$TAR_GZ" "$LISTADO_TMP" "$LOCK_FILE"
-        unset pass_hash
-        return 1
-    fi
+# 🔹 Generar hash del tar.gz antes de cifrar
+sha256sum "$TAR_GZ" | awk '{print $1}' > "$HASH_FILE"
 
-    mv "$TEMP_VAULT" "$CONTENEDOR"
+echo -e "${nc}(${azul}*${nc}) Cifrando contenedor...${nc}"
 
-    # 🔹 Eliminar archivos originales tras cifrado
-    while IFS= read -r -d '' archivo; do
-        rm -f "$SDCARD/$archivo"
-    done < "$LISTADO_TMP"
-
-    rm -f "$TAR_GZ" "$LISTADO_TMP" "$LOCK_FILE"
+total_bytes=$(stat -c%s "$TAR_GZ")
+if ! pv -s "$total_bytes" "$TAR_GZ" | openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:"$pass_hash" -out "$TEMP_VAULT"; then
+    echo -e "${rojo}✖ Error durante el cifrado${nc}"
+    rm -f "$TEMP_VAULT" "$TAR_GZ" "$LISTADO_TMP" "$LOCK_FILE" "$HASH_FILE"
     unset pass_hash
+    return 1
+fi
 
-    echo -e "${verde}✔ Contenedor creado correctamente: $CONTENEDOR${nc}"
-    echo -e "${verde}✔ Cifrado completo finalizado.${nc}"
+mv "$TEMP_VAULT" "$CONTENEDOR"
+
+# 🔹 Eliminar archivos originales tras cifrado
+while IFS= read -r -d '' archivo; do
+    rm -f "$SDCARD/$archivo"
+done < "$LISTADO_TMP"
+
+# 🔹 Limpiar temporales
+rm -f "$TAR_GZ" "$LISTADO_TMP" "$LOCK_FILE"
+
+unset pass_hash
+echo -e "${verde}✔ Contenedor creado correctamente: $CONTENEDOR${nc}"
+echo -e "${verde}✔ Cifrado completo finalizado.${nc}"
+
+	
+
+   
     sleep 1
     menu_principal
 }
@@ -722,6 +735,7 @@ descifrado_completo() {
     echo -e "${nc}(${verde}*${nc}) Ingresá la contraseña para descifrar todo..."
     sleep 1
 
+    # 🔹 Leer contraseña de manera segura
     exec 3<&0
     read -s -p "(*) Escribí tu contraseña: " pass <&3
     echo
@@ -730,10 +744,12 @@ descifrado_completo() {
     pass_hash=$(echo -n "$pass" | sha256sum | awk '{print $1}')
     unset pass
 
+    # --- Rutas Termux ---
     SDCARD="$HOME/storage/shared"
     CONTENEDOR="$SDCARD/vault.enc"
     TEMP_VAULT="$SDCARD/vault.tmp"
     TAR_TMP="$SDCARD/vault.tar"
+    HASH_FILE="$SDCARD/vault.sha256"
 
     if [ ! -f "$CONTENEDOR" ]; then
         echo -e "${rojo}✖ No se encontró el contenedor: $CONTENEDOR${nc}"
@@ -742,6 +758,7 @@ descifrado_completo() {
 
     echo -e "${nc}(${azul}*${nc}) Preparando extracción... esto puede tardar un momento${nc}"
 
+    # 🔹 Descifrar contenedor con pv y openssl
     total_bytes=$(stat -c%s "$CONTENEDOR")
     if ! pv -s "$total_bytes" "$CONTENEDOR" | openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:"$pass_hash" -out "$TEMP_VAULT"; then
         echo -e "${rojo}✖ Contraseña incorrecta o contenedor corrupto.${nc}"
@@ -759,7 +776,22 @@ descifrado_completo() {
         return 1
     fi
 
+    # 🔹 Verificación de integridad antes de restaurar
+    if [ -f "$HASH_FILE" ]; then
+        computed_hash=$(sha256sum "$TAR_TMP" | awk '{print $1}')
+        original_hash=$(cat "$HASH_FILE")
+        if [[ "$computed_hash" != "$original_hash" ]]; then
+            echo -e "${rojo}✖ Error de integridad: el contenedor parece haber sido modificado.${nc}"
+            rm -f "$TEMP_VAULT" "$TAR_TMP"
+            unset pass_hash
+            return 1
+        fi
+        rm -f "$HASH_FILE"
+    fi
+
     echo -e "${nc}(${azul}*${nc}) Restaurando archivos a sus ubicaciones originales...${nc}"
+
+    # 🔹 Extraer tar a la raíz de SDCARD
     cd "$SDCARD" || return 1
     if ! tar --null -xf "$TAR_TMP" -C "$SDCARD"; then
         echo -e "${rojo}✖ Error al extraer archivos del contenedor${nc}"
@@ -768,6 +800,7 @@ descifrado_completo() {
         return 1
     fi
 
+    # 🔹 Limpiar temporales
     rm -f "$TEMP_VAULT" "$TAR_TMP" "$CONTENEDOR"
     unset pass_hash
 
@@ -776,7 +809,6 @@ descifrado_completo() {
     sleep 1
     menu_principal
 }
-
 
 
 
