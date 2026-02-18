@@ -1,7 +1,7 @@
 
 <p align="center">
 <a href="https://github.com/FacuSecX"><img title="Autor" src="https://img.shields.io/badge/Author-Facu%20-blue?style=for-the-badge&logo=github"></a>
-<a href=""><img title="Version" src="https://img.shields.io/badge/Version-1.0-red?style=for-the-badge&logo="></a>
+<a href=""><img title="Version" src="https://img.shields.io/badge/Version-2.0-red?style=for-the-badge&logo="></a>
 </p>
 
 <p align="center">
@@ -34,6 +34,29 @@ al utilizar cualquier opcion de cifrado, el archivo original se elimina y se enc
 Cuando encripte cualquier tipo de archivo, estos dejarán de ser visibles en sus aplicaciones, como la galería o el reproductor de música. Una vez haya desencriptado los archivos, es posible que aún no aparezcan en las aplicaciones que gestionan esos tipos de contenido. Por este motivo, el programa incluye una función de actualización multimedia que realiza un "refresh" para que sus archivos vuelvan a ser detectados y visibles nuevamente.
 
 Este proceso puede demorar dependiendo de la cantidad de archivos que fueron cifrados. Sin embargo, puede acceder a ellos de forma más rápida mediante el gestor de archivos de su teléfono. Si prefiere no esperar el proceso de actualización, también puede reiniciar su dispositivo; al encenderlo, todos sus archivos volverán a mostrarse correctamente en la galería, el reproductor de música o cualquier aplicación que utilice para gestionar distintos tipos de archivos.
+
+## V2.0:
+
+* Se corrigieron errores críticos de seguridad en las funciones de CIFRADO Y DECIFRADO COMPLETO (Directorio raiz /sdcard)
+* Se implementó cifrado en contenedor único.
+* se eliminó el cifrado archivo por archivo para mejorar estabilidad y rendimiento.
+* Se añadió verificación para evitar sobrescribir contenedores existentes.
+* Se implementó sistema de lock file y limpieza automática de temporales.
+* Se optimizó el manejo de contraseñas y variables sensibles en memoria.
+* Se agregaron barras de progreso reales usando pv
+* se optimizó el flujo con tar + gzip antes del cifrado.
+* se restauran automáticamente los archivos a sus rutas originales al descifrar.
+* Se mejoró la detección de errores y la experiencia general del usuario.
+* Se mejoró el sistema de cifrado aumentando la seguridad del flujo y la derivación de clave mediante PBKDF2.
+
+## 🚀 Resultado V2:
+
+Una versión más segura, estable y rápida, con cifrado completo en contenedor, restauración automática y progreso visual durante todo el proceso.
+
+## 🚀 Proxima update V3.0
+
+En próximas actualizaciones se incorporarán todas las mejoras de seguridad al resto de funciones del script.
+
 
 ## Funciones automatizadas incluidas:
 
