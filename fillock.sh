@@ -61,141 +61,31 @@ EXT_OTROS=(".pdf" ".exe" ".txt" ".zip" ".rar" ".opus" ".csv" ".html" ".htm" ".vc
 # trap ctrl-c and call ctrl_c()
 trap ctrl_c INT
 
-# Verificar Dependencias
-clear
- echo -e "$blue(*)$nc Verificando dependencias.."
- sleep 3
-if which openssl >/dev/null; then
-    sleep 0.25
-    echo -e "$blue(openssl)$nc Instalado [$green✓$nc]"
-else
-    sleep 0.25
-    echo -e "${azul}(OpenSSL)${verde} No instalado."
-    sleep 1
-    echo -e "${nc}Instalá escribiendo: ${verde}pkg install install openssl -y pkg install openssl-tool"
-    exit 1
-fi
+check_command() {
+    if command -v "$1" >/dev/null 2>&1; then
+        echo -e "$blue($1)$nc Instalado [$green✓$nc]"
+    else
+        echo -e "$blue($1)$nc No instalado [$red✗$nc]"
+        echo -e "Instalá escribiendo: pkg install $1 -y"
+        exit 
+    fi
+}
 
-# Verificar awk
-if which awk >/dev/null; then
-    sleep 1
-    echo -e "$blue(awk)$nc Instalado [$green✓$nc]"
-else
-    sleep 1
-    echo -e "${azul}(awk)${verde} Instalado correctamente."
-    sleep 1
-    echo -e "${nc}Instalá escribiendo: ${verde}apt-get install awk -y"
-    exit 1
-fi
-
-# Verificar gawk 
-if which gawk >/dev/null; then
-    sleep 1
-    echo -e "$blue(gawk)$nc Instalado [$green✓$nc]"
-else
-    sleep 1
-    echo -e "${azul}(gawk)${verde} No instalado."
-    sleep 1
-    echo -e "${nc}Instalá escribiendo: ${verde}apt-get install gawk -y"
-   
-fi
-
-# Verificar sed
-if which sed >/dev/null; then
-    sleep 1
-   echo -e "$blue(sed)$nc Instalado [$green✓$nc]"
-else
-    sleep 0.25
-    echo -e "${azul}(sed)${verde} No instalado."
-    sleep 1
-    echo -e "${nc}Instalá escribiendo: ${verde}apt-get install sed -y"
-    exit 1
-fi
-
-# Verificar am (Android Termux media broadcast)
-if which am >/dev/null; then
-    sleep 1
-  echo -e "$blue(am)$nc Instalado [$green✓$nc]"
-else
-    sleep 1
-    echo -e "${azul}(am)${verde} No instalado o no accesible."
-    sleep 1
-    echo -e "${nc}Asegurate de estar en Termux con permisos para 'am'"
-    exit 1
-   
-fi
-
-if which toilet >/dev/null; then
-sleep 1
-  echo -e "$blue(toilet)$nc Instalado [$green✓$nc]"
-else
-sleep 1
-echo -e "$red(Toilet)$nc No instalado [$red✗$nc]"
-sleep 1
-echo "Instala escribiendo [sudo pkg install toilet]"
-sleep 1
-exit 1
-fi
-
-if which cowsay >/dev/null; then
-sleep 1
-  echo -e "$blue(cowsay)$nc Instalado [$green✓$nc]"
-else
-sleep 1
-echo -e "$red(cowsay)$nc No instalado [$red✗$nc]"
-sleep 1
-echo "Instala escribiendo [sudo pkg install cowsay]"
-sleep 1
-exit 1
-fi
-
-if which gem >/dev/null; then
-sleep 1
-  echo -e "$blue(gem)$nc Instalado [$green✓$nc]"
-else
-sleep 1
-echo -e "$red(gem)$nc No instalado [$red✗$nc]"
-sleep 1
-echo "Instala escribiendo [sudo pkg install ruby -y]"
-sleep 1
-exit 1
-fi
-
-if which figlet >/dev/null; then
-sleep 1
-echo -e "$blue(figlet)$nc Instalado [$green✓$nc]"
-else
-sleep 1
-echo -e "$red(figlet)$nc No instalado [$red✗$nc]"
-sleep 1
-echo "Instala escribiendo [sudo pkg install figlet -y]"
-sleep 1
-exit 1
-fi
-
-if which mpv  >/dev/null; then
-sleep 1
-echo -e "$blue(mpv)$nc Instalado [$green✓$nc]"
-else
-sleep 1
-echo -e "$red(mpv)$nc No instalado [$red✗$nc]"
-sleep 1
-echo "Instala escribiendo [sudo pkg install mpv -y]"
-sleep 1
-exit 1
-fi
-
-if which exiftool  >/dev/null; then
-sleep 1
-echo -e "$blue(exiftool)$nc Instalado [$green✓$nc]"
-else
-sleep 1
-echo -e "$red(exiftool)$nc No instalado [$red✗$nc]"
-sleep 1
-echo "Instala escribiendo [sudo pkg install exiftool -y]"
-sleep 1
-exit 1
-fi
+# Verificar paquetes críticos
+check_command openssl
+check_command pv
+check_command tar
+check_command gzip
+check_command awk
+check_command gawk
+check_command sed
+check_command cowsay
+check_command figlet
+check_command mpv
+check_command exiftool
+check_command shred
+check_command ruby
+check_command gem
 
 
 
@@ -203,18 +93,6 @@ fi
 
 
 
-# Verificar shred para borrado seguro
-if which shred >/dev/null; then
-    sleep 1
-     echo -e "$blue(shred)$nc Instalado [$green✓$nc]"
-else
-    sleep 1
-    echo -e "${azul}(shred)${verde} No instalado."
-    sleep 1
-    echo -e "${nc}Instalá escribiendo: ${verde}apt-get install coreutils -y"
-    
-exit 1
-fi
 #Funciones
 
 function ctrl_c() {
